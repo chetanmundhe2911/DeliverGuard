@@ -1,934 +1,181 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>DeliverGuard — Delivery Verification Demo</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-<style>
-  :root {
-    --bg: #0f1117;
-    --surface: #161b27;
-    --card: #1e2535;
-    --border: #2a3347;
-    --accent: #3b82f6;
-    --accent2: #10b981;
-    --warn: #f59e0b;
-    --danger: #ef4444;
-    --text: #e2e8f0;
-    --muted: #64748b;
-    --green-bg: #052e16;
-    --green-border: #166534;
-    --green-text: #4ade80;
-    --red-bg: #2d0a0a;
-    --red-border: #7f1d1d;
-    --red-text: #f87171;
-    --amber-bg: #1c1400;
-    --amber-border: #854d0e;
-    --amber-text: #fcd34d;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Space Grotesk', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    padding: 0;
-  }
-  /* Header */
-  .topbar {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 14px 24px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .topbar-logo {
-    width: 32px; height: 32px;
-    background: var(--accent);
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px;
-  }
-  .topbar h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
-  .topbar span { font-size: 11px; color: var(--muted); background: var(--card); border: 1px solid var(--border); padding: 2px 8px; border-radius: 20px; margin-left: 4px; }
-
-  .layout { display: grid; grid-template-columns: 380px 1fr; min-height: calc(100vh - 57px); }
-
-  /* Sidebar */
-  .sidebar {
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    overflow-y: auto;
-  }
-  .section-label {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 4px;
-  }
-  .config-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px;
-  }
-  .config-card h3 { font-size: 13px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
-  .field { margin-bottom: 12px; }
-  .field label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 500; }
-  .field input, .field select {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 10px;
-    font-size: 13px;
-    color: var(--text);
-    font-family: inherit;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .field input:focus, .field select:focus { border-color: var(--accent); }
-  .field input.mono { font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
-
-  /* People cards */
-  .person-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .avatar {
-    width: 40px; height: 40px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 600; font-size: 14px;
-    flex-shrink: 0;
-  }
-  .avatar.delivery { background: #1e3a5f; color: #60a5fa; }
-  .avatar.customer { background: #14532d; color: #4ade80; }
-  .person-info { flex: 1; }
-  .person-name { font-size: 14px; font-weight: 600; }
-  .person-role { font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .person-phone { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--accent); margin-top: 4px; }
-
-  /* Address */
-  .address-box {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px;
-  }
-  .address-box .addr-text { font-size: 12px; color: var(--muted); line-height: 1.6; margin-top: 6px; }
-  .coord-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 3px 8px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 10px;
-    color: var(--accent);
-    margin-top: 8px;
-  }
-
-  /* Main area */
-  .main { padding: 20px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
-
-  /* Scenario selector */
-  .scenario-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .scenario-btn {
-    background: var(--card);
-    border: 2px solid var(--border);
-    border-radius: 12px;
-    padding: 16px;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-align: left;
-  }
-  .scenario-btn:hover { border-color: var(--accent); }
-  .scenario-btn.active { border-color: var(--accent); background: #1a2744; }
-  .scenario-btn .s-icon { font-size: 24px; margin-bottom: 8px; }
-  .scenario-btn .s-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
-  .scenario-btn .s-desc { font-size: 11px; color: var(--muted); line-height: 1.5; }
-
-  /* GPS Panel */
-  .gps-panel {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px;
-  }
-  .gps-panel h3 { font-size: 14px; font-weight: 600; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
-  .gps-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-  .coord-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px;
-  }
-  .coord-card .cc-label { font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; }
-  .coord-card .cc-val { font-family: 'IBM Plex Mono', monospace; font-size: 13px; margin-top: 4px; color: var(--text); }
-  .coord-card .cc-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
-
-  .distance-display {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 14px;
-  }
-  .distance-num { font-size: 28px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; }
-  .distance-unit { font-size: 13px; color: var(--muted); }
-
-  /* Flag display */
-  .flag-display {
-    border-radius: 12px;
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    border: 1px solid;
-  }
-  .flag-display.green { background: var(--green-bg); border-color: var(--green-border); }
-  .flag-display.red { background: var(--red-bg); border-color: var(--red-border); }
-  .flag-display.pending { background: var(--surface); border-color: var(--border); }
-  .flag-icon { font-size: 28px; }
-  .flag-title { font-size: 15px; font-weight: 700; }
-  .flag-desc { font-size: 12px; opacity: 0.75; margin-top: 3px; }
-  .flag-display.green .flag-title { color: var(--green-text); }
-  .flag-display.red .flag-title { color: var(--red-text); }
-  .flag-display.pending .flag-title { color: var(--muted); }
-
-  /* Buttons */
-  .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 10px 18px;
-    border-radius: 8px;
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s;
-    border: none;
-    text-decoration: none;
-  }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: #2563eb; }
-  .btn-primary:disabled { background: #1e3a5f; color: var(--muted); cursor: not-allowed; }
-  .btn-success { background: var(--accent2); color: #fff; }
-  .btn-success:hover { background: #059669; }
-  .btn-success:disabled { background: #052e16; color: var(--muted); cursor: not-allowed; }
-  .btn-danger { background: var(--danger); color: #fff; }
-  .btn-danger:hover { background: #dc2626; }
-  .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
-  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
-  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
-
-  /* IVR panel */
-  .ivr-panel {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px;
-  }
-  .ivr-status {
-    display: flex; align-items: center; gap: 10px;
-    padding: 12px 16px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    margin-bottom: 14px;
-    font-size: 13px;
-  }
-  .ivr-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--muted);
-    flex-shrink: 0;
-  }
-  .ivr-dot.calling { background: var(--warn); animation: pulse 1s ease-in-out infinite; }
-  .ivr-dot.connected { background: var(--accent2); }
-  .ivr-dot.done { background: var(--accent); }
-  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.3)} }
-
-  .ivr-flow {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 14px;
-  }
-  .ivr-step {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    font-size: 13px;
-    transition: all 0.3s;
-    opacity: 0.4;
-  }
-  .ivr-step.active { opacity: 1; border-color: var(--accent); background: #1a2744; }
-  .ivr-step.done { opacity: 1; border-color: var(--green-border); background: var(--green-bg); }
-  .ivr-step .step-num {
-    width: 22px; height: 22px;
-    border-radius: 50%;
-    background: var(--border);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 10px; font-weight: 700;
-    flex-shrink: 0;
-  }
-  .ivr-step.active .step-num { background: var(--accent); color: #fff; }
-  .ivr-step.done .step-num { background: var(--green-border); color: var(--green-text); }
-  .ivr-step .step-text { flex: 1; }
-  .ivr-step .step-res { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--accent2); }
-
-  /* Log */
-  .log-panel {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px;
-  }
-  .log-entries {
-    background: #0a0d14;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
-    max-height: 180px;
-    overflow-y: auto;
-    line-height: 1.7;
-  }
-  .log-entry { display: flex; gap: 8px; }
-  .log-time { color: var(--muted); flex-shrink: 0; }
-  .log-info { color: #60a5fa; }
-  .log-success { color: #4ade80; }
-  .log-warn { color: #fcd34d; }
-  .log-error { color: #f87171; }
-
-  /* GPS locate button */
-  .locate-btn {
-    width: 100%;
-    padding: 11px;
-    background: var(--surface);
-    border: 1px dashed var(--accent);
-    border-radius: 10px;
-    color: var(--accent);
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    transition: all 0.2s;
-    margin-bottom: 14px;
-  }
-  .locate-btn:hover { background: #1a2744; }
-  .locate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid transparent; border-top-color: currentColor; border-radius: 50%; animation: spin 0.6s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .pill {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 2px 8px; border-radius: 20px;
-    font-size: 10px; font-weight: 600;
-    letter-spacing: 0.5px;
-  }
-  .pill.green { background: var(--green-bg); color: var(--green-text); border: 1px solid var(--green-border); }
-  .pill.red { background: var(--red-bg); color: var(--red-text); border: 1px solid var(--red-border); }
-  .pill.amber { background: var(--amber-bg); color: var(--amber-text); border: 1px solid var(--amber-border); }
-
-  .divider { height: 1px; background: var(--border); margin: 4px 0; }
-
-  .result-banner {
-    border-radius: 12px;
-    padding: 18px 20px;
-    border: 1px solid;
-    display: none;
-  }
-  .result-banner.show { display: block; }
-  .result-banner.success { background: var(--green-bg); border-color: var(--green-border); }
-  .result-banner.failure { background: var(--red-bg); border-color: var(--red-border); }
-  .result-banner h4 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
-  .result-banner.success h4 { color: var(--green-text); }
-  .result-banner.failure h4 { color: var(--red-text); }
-  .result-banner p { font-size: 12px; opacity: 0.8; line-height: 1.6; }
-
-  .radius-bar { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; }
-  .radius-row { display: flex; align-items: center; gap: 10px; }
-  .radius-track { flex: 1; height: 6px; background: var(--border); border-radius: 3px; position: relative; overflow: hidden; }
-  .radius-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease, background 0.3s; }
-
-  @media (max-width: 900px) {
-    .layout { grid-template-columns: 1fr; }
-    .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
-    .scenario-row { grid-template-columns: 1fr; }
-  }
-</style>
-</head>
-<body>
-
-<div class="topbar">
-  <div class="topbar-logo">📦</div>
-  <h1>DeliverGuard</h1>
-  <span>LIVE DEMO</span>
-  <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
-    <span id="gps-live-pill" class="pill amber">● GPS INACTIVE</span>
-  </div>
-</div>
-
-<div class="layout">
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <div class="section-label">People</div>
-
-    <div class="person-card">
-      <div class="avatar delivery">CH</div>
-      <div class="person-info">
-        <div class="person-name">Chetan</div>
-        <div class="person-role">Delivery Boy · Blue Dart</div>
-        <div class="person-phone">+91 XXXXXXXXXX</div>
-      </div>
-      <span class="pill amber">AGENT</span>
-    </div>
-
-    <div class="person-card">
-      <div class="avatar customer">NI</div>
-      <div class="person-info">
-        <div class="person-name">Nishant</div>
-        <div class="person-role">Customer</div>
-        <div class="person-phone">+91 XXXXXXXXXX</div>
-      </div>
-      <span class="pill green">RECIPIENT</span>
-    </div>
-
-    <div class="divider"></div>
-
-    <div class="section-label">Delivery Address</div>
-    <div class="address-box">
-      <div style="font-size:12px;font-weight:600;color:var(--text)">Nishant's Location</div>
-      <div class="addr-text">7 Avenues Block-7, S.No.29, Opp. Balewadi Stadium, Bombay-Bangalore Highway, Balewadi, Pune, Maharashtra 411045</div>
-      <div class="coord-badge" id="target-coord-badge">📍 18.5806° N, 73.7637° E</div>
-    </div>
-
-    <div class="divider"></div>
-
-    <div class="section-label">Twilio Config</div>
-    <div class="config-card">
-      <h3>🔑 API Credentials</h3>
-      <div class="field">
-        <label>Account SID</label>
-        <input class="mono" type="text" id="twilio-sid" value="" placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"/>
-      </div>
-      <div class="field">
-        <label>Auth Token</label>
-        <input class="mono" type="password" id="twilio-token" value="" placeholder="your_auth_token"/>
-      </div>
-      <div class="field">
-        <label>Twilio Phone Number (From)</label>
-        <input class="mono" type="text" id="twilio-from" value="" placeholder="+1XXXXXXXXXX"/>
-      </div>
-      <div class="field">
-        <label>Delivery Boy Number</label>
-        <input class="mono" type="text" id="num-delivery" value="" placeholder="+91XXXXXXXXXX"/>
-      </div>
-      <div class="field">
-        <label>Customer Number (Nishant)</label>
-        <input class="mono" type="text" id="num-customer" value="" placeholder="+91XXXXXXXXXX"/>
-      </div>
-    </div>
-
-    <div class="section-label">Geo Settings</div>
-    <div class="config-card">
-      <h3>📐 Proximity Threshold</h3>
-      <div class="field">
-        <label>Radius (meters) — currently 100m</label>
-        <input type="range" id="radius-input" min="50" max="1000" value="100" step="50" oninput="document.getElementById('radius-val').textContent=this.value+'m'"/>
-        <div style="text-align:right;font-size:12px;color:var(--accent);margin-top:4px" id="radius-val">100m</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MAIN -->
-  <div class="main">
-    <div>
-      <div class="section-label" style="margin-bottom:10px">Choose Scenario</div>
-      <div class="scenario-row">
-        <div class="scenario-btn active" id="sc1" onclick="selectScenario(1)">
-          <div class="s-icon">✅</div>
-          <div class="s-title">Scenario 1 — Honest Delivery</div>
-          <div class="s-desc">Chetan reached address, no one home, called Nishant who said cancel. GPS verifies he was near the address. IVR confirms with customer.</div>
-        </div>
-        <div class="scenario-btn" id="sc2" onclick="selectScenario(2)">
-          <div class="s-icon">🚨</div>
-          <div class="s-title">Scenario 2 — Fake Cancellation</div>
-          <div class="s-desc">Chetan cancelled without visiting or calling. Same real GPS used — system flags him as far from address. IVR reveals customer never cancelled.</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- FLAG 1: GEO VERIFICATION -->
-    <div class="gps-panel">
-      <h3>🛰️ Flag 1 — Geo Verification <span class="pill amber" id="geo-pill" style="margin-left:6px">PENDING</span></h3>
-
-      <button class="locate-btn" id="locate-btn" onclick="getLocation()">
-        <span id="locate-icon">📍</span>
-        <span id="locate-text">Get My Current GPS Location (Delivery Boy)</span>
-      </button>
-
-      <div class="gps-grid">
-        <div class="coord-card">
-          <div class="cc-label">Delivery Boy Location</div>
-          <div class="cc-val" id="my-coords">—</div>
-          <div class="cc-desc" id="my-acc">Accuracy: —</div>
-        </div>
-        <div class="coord-card">
-          <div class="cc-label">Nishant's Address</div>
-          <div class="cc-val" id="target-coords-display">18.5806, 73.7637</div>
-          <div class="cc-desc">7 Avenues, Balewadi, Pune</div>
-        </div>
-      </div>
-
-      <button class="locate-btn" id="pin-btn" onclick="pinTargetHere()" style="border-color:var(--accent2);color:var(--accent2);margin-bottom:8px" title="Use your current GPS as Nishant's address — do this when standing at the delivery address">
-        <span>📌</span>
-        <span>Pin Nishant's Address Here (stand at delivery door & tap)</span>
-      </button>
-
-      <div class="radius-bar">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:600">DISTANCE vs THRESHOLD</div>
-        <div class="radius-row">
-          <div style="font-size:11px;color:var(--muted);width:60px">0m</div>
-          <div class="radius-track" style="flex:1">
-            <div class="radius-fill" id="radius-fill" style="width:0%;background:var(--accent)"></div>
-          </div>
-          <div style="font-size:11px;color:var(--muted);width:60px;text-align:right">1000m+</div>
-        </div>
-        <div style="font-size:12px;color:var(--text);margin-top:6px;text-align:center" id="dist-label">—</div>
-      </div>
-
-      <div class="flag-display pending" id="geo-flag">
-        <div class="flag-icon">⏳</div>
-        <div>
-          <div class="flag-title">Awaiting GPS data</div>
-          <div class="flag-desc">Click "Get My Current GPS Location" to capture delivery boy position</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- FLAG 2: IVR CALL -->
-    <div class="ivr-panel">
-      <h3>📞 Flag 2 — IVR Auto-Call to Customer <span class="pill amber" id="ivr-pill" style="margin-left:6px">STANDBY</span></h3>
-
-      <div class="ivr-status" id="ivr-status-bar">
-        <div class="ivr-dot" id="ivr-dot"></div>
-        <span id="ivr-status-text">Waiting for cancellation to be triggered...</span>
-      </div>
-
-      <div class="ivr-flow" id="ivr-flow">
-        <div class="ivr-step" id="step-1">
-          <div class="step-num">1</div>
-          <div class="step-text">Twilio calls Nishant: <em>"Did you cancel your order? Press 1 for Yes, 2 for No"</em></div>
-          <div class="step-res" id="step-1-res"></div>
-        </div>
-        <div class="ivr-step" id="step-2">
-          <div class="step-num">2</div>
-          <div class="step-text">If Yes → <em>"Do you want to reschedule? Press 1 for Yes, 2 for No"</em></div>
-          <div class="step-res" id="step-2-res"></div>
-        </div>
-        <div class="ivr-step" id="step-3">
-          <div class="step-num">3</div>
-          <div class="step-text">Outcome logged and order status updated automatically</div>
-          <div class="step-res" id="step-3-res"></div>
-        </div>
-      </div>
-
-      <div class="btn-row">
-        <button class="btn btn-danger" id="cancel-btn" onclick="triggerCancellation()">
-          🚫 Delivery Boy Marks: Cancel Order
-        </button>
-        <button class="btn btn-outline" id="reset-btn" onclick="resetAll()" style="display:none">
-          ↺ Reset Demo
-        </button>
-      </div>
-
-      <div class="result-banner" id="result-banner" style="margin-top:14px">
-        <h4 id="result-title"></h4>
-        <p id="result-body"></p>
-      </div>
-    </div>
-
-    <!-- LOG -->
-    <div class="log-panel">
-      <h3 style="font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px">🖥️ System Log <span class="pill amber" id="log-pill" style="font-size:9px">LIVE</span></h3>
-      <div class="log-entries" id="log"></div>
-    </div>
-  </div>
-</div>
-
-<script>
-// ── State ──────────────────────────────────────────────────────────────────
-let myLat = null, myLng = null;
-let activeScenario = 1;
-let geoChecked = false;
-let callInProgress = false;
-
-// Nishant's address coordinates (Balewadi Stadium, Pune)
-let TARGET_LAT = 18.5806;
-let TARGET_LNG = 73.7637;
-
-// ── Logging ────────────────────────────────────────────────────────────────
-function log(msg, type = 'info') {
-  const el = document.getElementById('log');
-  const time = new Date().toLocaleTimeString('en-IN', { hour12: false });
-  const div = document.createElement('div');
-  div.className = 'log-entry';
-  div.innerHTML = `<span class="log-time">${time}</span><span class="log-${type}">${msg}</span>`;
-  el.appendChild(div);
-  el.scrollTop = el.scrollHeight;
-}
-
-// ── Haversine Distance ─────────────────────────────────────────────────────
-function haversine(lat1, lng1, lat2, lng2) {
-  const R = 6371000;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-}
-
-// ── Scenario selection ─────────────────────────────────────────────────────
-function selectScenario(n) {
-  activeScenario = n;
-  document.getElementById('sc1').classList.toggle('active', n === 1);
-  document.getElementById('sc2').classList.toggle('active', n === 2);
-  const desc = n === 1
-    ? 'Scenario 1: Chetan reached address, no one home, customer called and cancelled'
-    : 'Scenario 2: Chetan cancelled without going to address or calling customer';
-  log(desc, 'info');
-  // Re-evaluate with existing GPS if already captured
-  if (myLat !== null) evaluateProximity();
-}
-
-// ── Get GPS Location — ALWAYS real browser GPS ─────────────────────────────
-function getLocation() {
-  const btn = document.getElementById('locate-btn');
-  const icon = document.getElementById('locate-icon');
-  const txt = document.getElementById('locate-text');
-
-  if (!navigator.geolocation) {
-    log('Geolocation not supported by this browser', 'error');
-    return;
-  }
-
-  btn.disabled = true;
-  icon.innerHTML = '<span class="spinner"></span>';
-  txt.textContent = 'Acquiring GPS signal...';
-  log('Requesting real GPS from browser (this is Chetan\'s actual location)...', 'info');
-
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      myLat = pos.coords.latitude;
-      myLng = pos.coords.longitude;
-      const acc = Math.round(pos.coords.accuracy);
-      log(`Real GPS acquired: ${myLat.toFixed(6)}, ${myLng.toFixed(6)} (±${acc}m accuracy)`, 'success');
-      document.getElementById('my-coords').textContent = `${myLat.toFixed(6)}, ${myLng.toFixed(6)}`;
-      document.getElementById('my-acc').textContent = `Accuracy: ±${acc}m`;
-      document.getElementById('gps-live-pill').textContent = '● GPS LIVE';
-      document.getElementById('gps-live-pill').className = 'pill green';
-      btn.disabled = false;
-      icon.textContent = '✅';
-      txt.textContent = 'GPS Captured — Click to refresh';
-      evaluateProximity();
-    },
-    (err) => {
-      log(`GPS error: ${err.message}`, 'error');
-      btn.disabled = false;
-      icon.textContent = '📍';
-      txt.textContent = 'GPS failed — try again';
-    },
-    { enableHighAccuracy: true, timeout: 15000 }
-  );
-}
-
-// ── Pin Target Location (stand at Nishant's door and tap this) ─────────────
-function pinTargetHere() {
-  const btn = document.getElementById('pin-btn');
-  if (!navigator.geolocation) { log('Geolocation not supported', 'error'); return; }
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span><span>Pinning location...</span>';
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      TARGET_LAT = pos.coords.latitude;
-      TARGET_LNG = pos.coords.longitude;
-      const acc = Math.round(pos.coords.accuracy);
-      log(`✅ Target pinned to current location: ${TARGET_LAT.toFixed(6)}, ${TARGET_LNG.toFixed(6)} (±${acc}m)`, 'success');
-      document.getElementById('target-coords-display').textContent = `${TARGET_LAT.toFixed(6)}, ${TARGET_LNG.toFixed(6)}`;
-      document.getElementById('target-coord-badge').textContent = `📍 ${TARGET_LAT.toFixed(4)}° N, ${TARGET_LNG.toFixed(4)}° E`;
-      btn.disabled = false;
-      btn.innerHTML = '<span>✅</span><span>Target Pinned! Re-tap to update</span>';
-      if (myLat !== null) evaluateProximity();
-    },
-    (err) => {
-      log(`Pin error: ${err.message}`, 'error');
-      btn.disabled = false;
-      btn.innerHTML = '<span>📌</span><span>Pin Nishant\'s Address Here (stand at delivery door & tap)</span>';
-    },
-    { enableHighAccuracy: true, timeout: 15000 }
-  );
-}
-
-function evaluateProximity() {
-  if (myLat === null) return;
-  const threshold = parseInt(document.getElementById('radius-input').value);
-  const dist = haversine(myLat, myLng, TARGET_LAT, TARGET_LNG);
-  const distRounded = Math.round(dist);
-  const isClose = dist <= threshold;
-  geoChecked = true;
-
-  // Update distance bar
-  const pct = Math.min((dist / 1000) * 100, 100);
-  const fill = document.getElementById('radius-fill');
-  fill.style.width = pct + '%';
-  fill.style.background = isClose ? '#10b981' : '#ef4444';
-  document.getElementById('dist-label').textContent = `Distance: ${distRounded}m from Nishant's address (threshold: ${threshold}m)`;
-
-  // Update flag
-  const flagEl = document.getElementById('geo-flag');
-  const pill = document.getElementById('geo-pill');
-
-  if (isClose) {
-    flagEl.className = 'flag-display green';
-    flagEl.innerHTML = `<div class="flag-icon">🟢</div><div>
-      <div class="flag-title">GREEN FLAG — Delivery Boy Was Present</div>
-      <div class="flag-desc">Distance: ${distRounded}m · Within ${threshold}m threshold · Location verified ✓</div>
-    </div>`;
-    pill.className = 'pill green';
-    pill.textContent = '● VERIFIED';
-    log(`GEO CHECK → GREEN FLAG ✅ | Distance: ${distRounded}m | Threshold: ${threshold}m | Delivery boy was at address`, 'success');
-  } else {
-    flagEl.className = 'flag-display red';
-    flagEl.innerHTML = `<div class="flag-icon">🔴</div><div>
-      <div class="flag-title">RED FLAG — Delivery Boy Was NOT at Address</div>
-      <div class="flag-desc">Distance: ${distRounded}m · Exceeds ${threshold}m threshold · Possible fraud alert ⚠️</div>
-    </div>`;
-    pill.className = 'pill red';
-    pill.textContent = '● FRAUD ALERT';
-    log(`GEO CHECK → RED FLAG 🚨 | Distance: ${distRounded}m | Threshold: ${threshold}m | Delivery boy was FAR from address`, 'warn');
-  }
-}
-
-// ── Trigger Cancellation + IVR ─────────────────────────────────────────────
-async function triggerCancellation() {
-  if (callInProgress) return;
-  const sid = document.getElementById('twilio-sid').value.trim();
-  const token = document.getElementById('twilio-token').value.trim();
-  const from = document.getElementById('twilio-from').value.trim();
-  const to = document.getElementById('num-customer').value.trim();
-
-  if (!sid || !token || !from || !to) {
-    log('Missing Twilio credentials — fill all fields in sidebar', 'error');
-    return;
-  }
-
-  callInProgress = true;
-  document.getElementById('cancel-btn').disabled = true;
-  document.getElementById('reset-btn').style.display = 'inline-flex';
-  log('Order cancellation triggered by delivery boy', 'warn');
-  log(`Initiating Twilio IVR call to customer: ${to}`, 'info');
-
-  // Update IVR UI
-  setIvrStatus('calling', 'Connecting call to Nishant...');
-  setStep(1, 'active');
-  document.getElementById('ivr-pill').className = 'pill amber';
-  document.getElementById('ivr-pill').textContent = '● CALLING';
-
-  // Build TwiML — asks customer if they cancelled, then if reschedule wanted
-  // We use Twilio's <Gather> to capture keypress
-  const twiml = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Say voice="Polly.Aditi" language="en-IN">Hello! This is an automated message from Blue Dart Delivery.</Say>
-  <Gather numDigits="1" action="about:blank" method="POST">
-    <Say voice="Polly.Aditi" language="en-IN">Your delivery order was recently cancelled. Did you request this cancellation? Press 1 for Yes. Press 2 for No.</Say>
-  </Gather>
-  <Say voice="Polly.Aditi" language="en-IN">We did not receive your input. Please call our support team for assistance. Thank you.</Say>
-</Response>`;
-
-  try {
-    const encodedCreds = btoa(`${sid}:${token}`);
-    const formData = new URLSearchParams({
-      To: to,
-      From: from,
-      Twiml: twiml
-    });
-
-    log(`POST → api.twilio.com/2010-04-01/Accounts/${sid.slice(0,10)}…/Calls`, 'info');
-
-    const resp = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Calls.json`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${encodedCreds}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: formData.toString()
-    });
-
-    const data = await resp.json();
-
-    if (resp.ok && data.sid) {
-      log(`Twilio call created ✅ | Call SID: ${data.sid}`, 'success');
-      log(`Call status: ${data.status} | To: ${data.to} | From: ${data.from}`, 'success');
-      setIvrStatus('connected', `Call connected to Nishant (${to})`);
-      document.getElementById('ivr-pill').className = 'pill green';
-      document.getElementById('ivr-pill').textContent = '● CALL PLACED';
-
-      // Animate IVR steps with delays
-      setTimeout(() => {
-        setStep(1, 'done');
-        document.getElementById('step-1-res').textContent = 'CALL PLACED ✓';
-        setStep(2, 'active');
-        log('IVR Step 1 complete — Question 1 delivered to Nishant', 'success');
-      }, 2000);
-
-      setTimeout(() => {
-        setStep(2, 'done');
-        document.getElementById('step-2-res').textContent = 'AWAITING KEYPRESS';
-        setStep(3, 'active');
-        log('IVR Step 2 — Reschedule option delivered', 'success');
-      }, 4500);
-
-      setTimeout(() => {
-        setStep(3, 'done');
-        document.getElementById('step-3-res').textContent = 'LOGGED ✓';
-        setIvrStatus('done', `IVR flow complete · Call SID: ${data.sid.slice(0, 16)}…`);
-        showResult(true, data.sid);
-        log(`IVR flow complete ✅ | Order status updated in system`, 'success');
-      }, 6500);
-
-    } else {
-      const errMsg = data.message || data.code || JSON.stringify(data);
-      log(`Twilio error: ${errMsg}`, 'error');
-      setIvrStatus('error', `Call failed: ${errMsg}`);
-      showResult(false, errMsg);
-      callInProgress = false;
-      document.getElementById('cancel-btn').disabled = false;
-      document.getElementById('ivr-pill').className = 'pill red';
-      document.getElementById('ivr-pill').textContent = '● ERROR';
-    }
-
-  } catch (err) {
-    log(`Network error: ${err.message}`, 'error');
-    log('Note: CORS may block direct browser→Twilio calls. See instructions below.', 'warn');
-    // Show CORS note
-    setIvrStatus('error', 'CORS blocked — use backend proxy or Twilio Functions (see log)');
-    showCorsNote();
-    callInProgress = false;
-    document.getElementById('cancel-btn').disabled = false;
-  }
-}
-
-function showCorsNote() {
-  const banner = document.getElementById('result-banner');
-  banner.className = 'result-banner failure show';
-  document.getElementById('result-title').textContent = '⚠️ CORS Restriction — Use Backend or Twilio Functions';
-  document.getElementById('result-body').innerHTML = `
-    Browsers block direct calls to Twilio's API from a webpage (CORS policy). To run this demo with real calls, choose one of:<br><br>
-    <strong>Option A:</strong> Run a tiny Node.js proxy (<code>npm install express twilio cors</code>) on your machine and point this app to it.<br><br>
-    <strong>Option B:</strong> Use <a href="https://www.twilio.com/docs/serverless/functions-assets/functions" style="color:#60a5fa">Twilio Functions</a> — deploy a function that makes the call server-side, call it from here.<br><br>
-    <strong>Option C:</strong> Open browser DevTools → Console and paste the curl command logged above.
-  `;
-  log('See result panel for instructions on resolving CORS for real-device demo', 'warn');
-  // Also log the curl equivalent
-  const sid = document.getElementById('twilio-sid').value.trim();
-  const from = document.getElementById('twilio-from').value.trim();
-  const to = document.getElementById('num-customer').value.trim();
-  log(`CURL equivalent: curl -X POST "https://api.twilio.com/2010-04-01/Accounts/${sid}/Calls.json" -u "SID:TOKEN" -d "To=${to}&From=${from}&Twiml=..."`, 'info');
-}
-
-function showResult(success, detail) {
-  const banner = document.getElementById('result-banner');
-  banner.className = `result-banner ${success ? 'success' : 'failure'} show`;
-  if (success) {
-    document.getElementById('result-title').textContent = '✅ IVR Call Successfully Placed!';
-    document.getElementById('result-body').textContent = `Twilio has called Nishant (+91 7757870403). He will receive the IVR menu asking (1) Did you cancel? (2) Do you want to reschedule? · Call SID: ${detail}`;
-  } else {
-    document.getElementById('result-title').textContent = '❌ Call Failed';
-    document.getElementById('result-body').textContent = detail;
-  }
-}
-
-function setIvrStatus(state, msg) {
-  const dot = document.getElementById('ivr-dot');
-  document.getElementById('ivr-status-text').textContent = msg;
-  dot.className = 'ivr-dot';
-  if (state === 'calling') dot.classList.add('calling');
-  else if (state === 'connected' || state === 'done') dot.classList.add('connected');
-}
-
-function setStep(n, state) {
-  const el = document.getElementById(`step-${n}`);
-  el.className = `ivr-step ${state}`;
-}
-
-function resetGeoDisplay() {
-  myLat = null; myLng = null; geoChecked = false;
-  document.getElementById('my-coords').textContent = '—';
-  document.getElementById('my-acc').textContent = 'Accuracy: —';
-  document.getElementById('radius-fill').style.width = '0%';
-  document.getElementById('dist-label').textContent = '—';
-  document.getElementById('gps-live-pill').textContent = '● GPS INACTIVE';
-  document.getElementById('gps-live-pill').className = 'pill amber';
-  document.getElementById('geo-flag').className = 'flag-display pending';
-  document.getElementById('geo-flag').innerHTML = `<div class="flag-icon">⏳</div><div>
-    <div class="flag-title">Awaiting GPS data</div>
-    <div class="flag-desc">Click "Get My Current GPS Location" to capture delivery boy position</div>
-  </div>`;
-  document.getElementById('geo-pill').className = 'pill amber';
-  document.getElementById('geo-pill').textContent = 'PENDING';
-  const locateIcon = document.getElementById('locate-icon');
-  if (locateIcon) locateIcon.textContent = '📍';
-  const locateText = document.getElementById('locate-text');
-  if (locateText) locateText.textContent = 'Get My Current GPS Location (Delivery Boy)';
-  document.getElementById('locate-btn').disabled = false;
-}
-
-function resetAll() {
-  resetGeoDisplay();
-  callInProgress = false;
-  document.getElementById('cancel-btn').disabled = false;
-  document.getElementById('reset-btn').style.display = 'none';
-  document.getElementById('result-banner').className = 'result-banner';
-  for (let i = 1; i <= 3; i++) { setStep(i, ''); document.getElementById(`step-${i}-res`).textContent = ''; }
-  setIvrStatus('idle', 'Waiting for cancellation to be triggered...');
-  document.getElementById('ivr-dot').className = 'ivr-dot';
-  document.getElementById('ivr-pill').className = 'pill amber';
-  document.getElementById('ivr-pill').textContent = 'STANDBY';
-  log('--- Demo reset ---', 'info');
-}
-
-// Init log
-log('DeliverGuard initialized', 'success');
-log('Twilio credentials pre-loaded from your account', 'info');
-log('Nishant address geocoded: 18.5649°N, 73.7769°E (Balewadi Stadium, Pune)', 'info');
-log('Select scenario and click GPS button to begin', 'info');
-</script>
-</body>
-</html>
+# 📦 DeliverGuard
+
+> A real-time delivery verification demo that detects fraudulent order cancellations using live GPS and automated IVR calls.
+
+![DeliverGuard Dashboard](./dashboard-preview.png)
+
+---
+
+## 🧩 Problem Statement
+
+Last-mile delivery fraud is a growing problem. Two common scenarios:
+
+**Scenario 1 — Legitimate cancellation:** Delivery boy reaches the customer's address, finds no one home, calls the customer, and the customer requests cancellation.
+
+**Scenario 2 — Fraudulent cancellation:** Delivery boy never visits the address and cancels the order without contacting the customer — pocketing the item or avoiding the trip.
+
+DeliverGuard cross-verifies both scenarios using two automated flags.
+
+---
+
+## ✅ How It Works
+
+### 🛰️ Flag 1 — Geo Verification
+When a delivery boy marks an order as cancelled, the system captures his real GPS coordinates via the browser and computes the distance to the customer's delivery address using the **Haversine formula**.
+
+- If distance ≤ threshold (default 100m) → 🟢 **GREEN FLAG** — delivery boy was present
+- If distance > threshold → 🔴 **RED FLAG / Fraud Alert** — delivery boy was not at the address
+
+### 📞 Flag 2 — Automated IVR Call
+Once cancellation is triggered, the system auto-places a call to the customer via **Twilio** with an IVR menu:
+
+1. *"Did you cancel your order? Press 1 for Yes, Press 2 for No."*
+2. *"Would you like to reschedule your delivery? Press 1 for Yes, Press 2 for No."*
+
+The customer's response is logged and the order status updated accordingly.
+
+---
+
+## 🚀 Demo Setup
+
+### Prerequisites
+- A modern browser (Chrome recommended) with location permissions enabled
+- A [Twilio](https://twilio.com) account (free trial works)
+
+### Twilio Setup
+
+1. Sign up at [twilio.com/try-twilio](https://www.twilio.com/try-twilio) — no credit card needed for trial
+2. Go to **Phone Numbers → Verified Caller IDs** and verify both:
+   - Delivery boy's number
+   - Customer's number
+3. Go to **Phone Numbers → Buy a Number** → select **United States** → purchase any Voice-enabled number (~$1.15 from your free credits)
+4. From the **Account Dashboard**, copy:
+   - Account SID
+   - Auth Token
+   - Your Twilio phone number
+
+### Running the Demo
+
+This is a single self-contained HTML file — no build step, no dependencies, no server required.
+
+```bash
+# Clone the repo
+git clone https://github.com/your-username/deliverguard.git
+cd deliverguard
+
+# Open directly in browser
+open delivery-verify-demo.html
+```
+
+Or just double-click `delivery-verify-demo.html` in your file explorer.
+
+### Configuration
+
+Fill in the sidebar fields in the app at runtime — **no credentials are stored in the code**:
+
+| Field | Where to find it |
+|---|---|
+| Account SID | Twilio Console → Account Dashboard |
+| Auth Token | Twilio Console → Account Dashboard → Show |
+| Twilio Phone Number | Twilio Console → Phone Numbers → Active Numbers |
+| Delivery Boy Number | Your verified caller ID (e.g. `+919XXXXXXXXX`) |
+| Customer Number | Your verified caller ID (e.g. `+917XXXXXXXXX`) |
+
+> All fields are left blank in the repo intentionally. Fill them in the browser UI each session — nothing is persisted or sent anywhere except directly to Twilio.
+
+---
+
+## 📌 Pinning the Delivery Address
+
+For maximum accuracy, instead of relying on hardcoded map coordinates:
+
+1. **Stand at the customer's actual delivery address**
+2. Click **"📌 Pin Nishant's Address Here"** in the app
+3. The system saves your exact GPS as the target — precision to 6 decimal places
+
+This eliminates any map geocoding error.
+
+---
+
+## 🗂️ Project Structure
+
+```
+deliverguard/
+│
+├── delivery-verify-demo.html   # Complete app — single file, zero dependencies
+└── README.md                   # This file
+```
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | Vanilla HTML, CSS, JavaScript |
+| Fonts | Space Grotesk + IBM Plex Mono (Google Fonts) |
+| Geolocation | Browser Geolocation API (`navigator.geolocation`) |
+| Distance Calc | Haversine formula (pure JS) |
+| IVR Calls | Twilio Voice API + TwiML |
+| Voice | Amazon Polly — Aditi (Indian English) |
+
+---
+
+## ⚠️ Known Limitations
+
+**CORS on IVR calls:** Browsers block direct API calls to Twilio from a webpage. If the call fails with a network error, use one of these approaches:
+
+**Option A — Open file directly:**
+Open the HTML file from your local filesystem (`file://`) rather than a web server — some browsers permit this.
+
+**Option B — Node.js proxy (recommended for production):**
+```bash
+npm install express twilio cors
+```
+```js
+const express = require('express');
+const twilio = require('twilio');
+const cors = require('cors');
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+app.post('/call', async (req, res) => {
+  const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
+  const call = await client.calls.create({
+    to: req.body.to,
+    from: process.env.TWILIO_FROM,
+    twiml: req.body.twiml
+  });
+  res.json({ sid: call.sid, status: call.status });
+});
+
+app.listen(3000);
+```
+Then update the fetch URL in the HTML to `http://localhost:3000/call`.
+
+**Option C — Twilio Functions:**
+Deploy the call logic as a [Twilio Serverless Function](https://www.twilio.com/docs/serverless/functions-assets/functions) and call that endpoint instead.
+
+---
+
+## 📈 Roadmap / Future Improvements
+
+- [ ] Backend server (Node.js/Express) to resolve CORS and store logs in a database
+- [ ] Dashboard showing all cancellation events with geo + IVR outcomes
+- [ ] Webhook to capture customer keypress response from Twilio
+- [ ] WhatsApp message fallback if call goes unanswered
+- [ ] Mobile app wrapper (React Native / PWA) for delivery boys
+- [ ] Integration with delivery management systems (Shiprocket, Delhivery API)
+
+---
+
+## 🤝 Built For
+
+This project was built as a proof-of-concept demo for a startup stakeholder to demonstrate how delivery fraud can be detected and cross-verified in real time using off-the-shelf APIs — with zero backend infrastructure for the demo.
+
+---
+
+## 📄 License
+
+MIT License — free to use, modify, and distribute.
