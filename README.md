@@ -2,7 +2,7 @@
 
 > A real-time delivery verification demo that detects fraudulent order cancellations using live GPS and automated IVR calls.
 
-![DeliverGuard Dashboard](https://raw.githubusercontent.com/chetanmundhe2911/DeliverGuard/main/dashboard-preview.png)
+![DeliverGuard Dashboard](https://raw.githubusercontent.com/chetanmundhe2911/DeliverGuard/main/dashboard-preview.png) 
 
 ---
 
