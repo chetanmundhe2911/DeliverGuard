@@ -2,6 +2,8 @@
 
 > A real-time delivery verification demo that detects fraudulent order cancellations using live GPS and automated IVR calls.
 
+![DeliverGuard Dashboard](https://raw.githubusercontent.com/chetanmundhe2911/DeliverGuard/main/dashboard-preview.png)
+
 ---
 
 ## 🧩 Problem Statement
@@ -168,7 +170,7 @@ Deploy the call logic as a [Twilio Serverless Function](https://www.twilio.com/d
 
 ---
 
-## 🤝 Built For   
+## 🤝 Built For
 
 This project was built as a proof-of-concept demo for a startup stakeholder to demonstrate how delivery fraud can be detected and cross-verified in real time using off-the-shelf APIs — with zero backend infrastructure for the demo.
 
