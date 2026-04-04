@@ -172,7 +172,7 @@ Deploy the call logic as a [Twilio Serverless Function](https://www.twilio.com/d
 
 ## 🤝 Built For
 
-This project was built as a proof-of-concept demo for a startup stakeholder to demonstrate how delivery fraud can be detected and cross-verified in real time using off-the-shelf APIs — with zero backend infrastructure for the demo.
+This project was built as a proof-of-concept demo for a startup stakeholder to demonstrate how delivery fraud can be detected and cross-verified in real time using off-the-shelf APIs — with zero backend infrastructure for the demo
 
 ---
 
